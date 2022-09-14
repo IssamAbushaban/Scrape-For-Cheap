@@ -51,9 +51,26 @@ def ask_For_Keyword():
 
     return urllib.parse.quote(keywords)
 
-# This function...
+# This function requests a price estimate from the user and returns it to the program
 def ask_For_Price_Guess():
-    return 0
+    price = 0.00
+    priceApproved = False
+    
+    while not priceApproved:
+        print("What is the lowest price you estimate that item could go for?\n")
+        price = input("$").strip()
+        
+        #Check keywords
+        if not price.isfloat:
+            print("\nPlease enter in a valid price (e.g. $2.00).")
+            continue
+        elif float(price) <= 0.00:
+            print("\nPlease enter a price greater thank $0.00.")
+            continue
+        else:
+            priceApproved = True
+
+    return price
 
 # This function...
 def generate_URLs(keywordString, priceGuess):
