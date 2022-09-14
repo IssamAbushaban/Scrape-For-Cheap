@@ -1,7 +1,7 @@
 # ScrapeForCheapFuncs.py
 # 
 # Developed by Issam Abushaban
-# Last updated: Septempber 13th 2022
+# Last updated: Septempber 14th 2022
 # 
 # Objective: Scrape for Cheap Functions
 
@@ -72,9 +72,15 @@ def ask_For_Price_Guess():
 
     return price
 
-# This function...
+# This function takes the keywords and price guess of the user and converts them to full URLs
+# TODO: Right now priceGuess is not yet incorporated.
 def generate_URLs(keywordString, priceGuess):
-    return ["","",""]
+
+    return [
+            walmartURIPrefix + keywordString + walmartURISuffix,
+            ebayURIPrefix + keywordString + ebayURISuffix,
+            amazonURIPrefix + keywordString + amazonURISuffix
+            ]
 
 # This function...
 def get_Request_For_URLs(generatedURLs):

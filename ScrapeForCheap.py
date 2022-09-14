@@ -1,7 +1,7 @@
 # ScrapeForCheap.py
 # 
 # Developed by Issam Abushaban
-# Last updated: Septempber 13th 2022
+# Last updated: Septempber 14th 2022
 # 
 # Objective: Scrape Amazon, Walmart & Ebay for the top result 
 # (as assessed by best match, price, and rating when applicable) matching a person's keywords and expected price
