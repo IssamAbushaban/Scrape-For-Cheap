@@ -5,13 +5,21 @@
 # 
 # Objective: Scrape for Cheap Functions
 
-# This is to help us make HTTP request
+# For replacing text
+from dataclasses import replace
+# For transating to URL
 from urllib import response
+# This is to help us make HTTP request
 import requests
 # This is to make the text coming from the site more readible
 from bs4 import BeautifulSoup 
 # So we can convert text to a URL query
 import urllib.parse
+
+amazonHeaders = {
+                 "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/105.0.0.0 Safari/537.36",
+                 "sec-ch-ua-platform" : "macOS"
+                 }
 
 # Walmart URI components
 walmartURIPrefix  = "https://www.walmart.com/search?q="
@@ -81,11 +89,14 @@ def ask_For_Price_Guess():
 # This function takes the keywords and price guess of the user and converts them to full URLs
 # TODO: Right now priceGuess is not yet incorporated.
 def generate_URLs(keywordString, priceGuess):
+    
+    # amazon has some weird rules!
+    amazonKeywordString = keywordString.replace("+","%2B").replace("%20", "+")
 
+    # Min price specifications
     walmartPriceGuess = str(round(priceGuess))
     ebayPriceGuess = "{0:.2f}".format(priceGuess)
     amazonPriceGuess = "{0:.2f}".format(priceGuess)
-
     amazonPriceGuessParts = amazonPriceGuess.split(".")
     amazonPriceGuess =   amazonPriceGuessParts[0] + amazonPriceGuessParts[1]
     
@@ -94,19 +105,57 @@ def generate_URLs(keywordString, priceGuess):
     #print("\nebayPriceGuess = " + ebayPriceGuess)
     #print("\namazonPriceGuess = " + amazonPriceGuess)
 
-    return [
-            walmartURIPrefix + keywordString + walmartURISuffix1 + walmartPriceGuess + walmartURISuffix2,
-            ebayURIPrefix + keywordString + ebayURISuffix1 + ebayPriceGuess + ebayURISuffix2,
-            amazonURIPrefix + keywordString + amazonURISuffix1 + amazonPriceGuess + amazonURISuffix2
-            ]
+    generatedURLs = [
+        walmartURIPrefix + keywordString + walmartURISuffix1 + walmartPriceGuess + walmartURISuffix2,
+        ebayURIPrefix + keywordString + ebayURISuffix1 + ebayPriceGuess + ebayURISuffix2,
+        amazonURIPrefix + amazonKeywordString + amazonURISuffix1 + amazonPriceGuess + amazonURISuffix2
+    ]
 
-# This function...
+    return generatedURLs
+
+# This function gets the requests for the urls and returns a list of the Responses
 def get_Request_For_URLs(generatedURLs):
-    return []
+    
+    # Keep track of the request failures
+    numFailures = 0
+
+    # lets make a GET request for each URL
+    responsesRecieved = [ requests.get(generatedURLs[0]),
+                          requests.get(generatedURLs[1]),
+                          requests.get(generatedURLs[2], headers=amazonHeaders)
+                        ]
+
+    print()
+
+    # Check for request failures
+    if (responsesRecieved[0].status_code != 200):
+        print(">Walmart Request Failed - Status Code: " + str(responsesRecieved[0].status_code))
+        numFailures += 1
+    
+    if (responsesRecieved[1].status_code != 200):
+        print(">Ebay Request Failed - Status Code: " + str(responsesRecieved[1].status_code))
+        numFailures += 1
+
+    if (responsesRecieved[2].status_code != 200):
+        print(">Amazon Request Failed - Status Code: " + str(responsesRecieved[2].status_code))
+        numFailures += 1
+
+    if numFailures > 0:
+        #responsesRecieved.clear()
+        pass
+    
+    return responsesRecieved
 
 # This function...
-def digest_Requests(requestsGotten):
-    return []
+def digest_Responses(responsesRecieved):
+
+    # Use Beautiful Soup to clean that html!
+    # soupOfURI = BeautifulSoup(reqGET.content, 'html.parser')
+
+    # Print content of request
+    # print(soupOfURI.prettify() + "\n")
+
+    return ""
 
 # This function...
 def ask_For_User_Desire_To_Continue():
