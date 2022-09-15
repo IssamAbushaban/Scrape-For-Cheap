@@ -15,7 +15,7 @@ Let’s research how each of these sites structure their URIs.
 - Searching for “Blue Cat Hat” produces the following:
     - [`https://www.walmart.com/search?q=Blue+Cat+Hat`](https://www.walmart.com/search?q=Blue+Cat+Hat)
         - https://www.walmart.com/search?q=[keywords parsed by +]
-- For the price is lowest and at least $10 on Walmart this happens:
+- For the price is lowest and at least $10.02, we can't do that. walmart seems to ignore decimals and then the item search is invalid. Therefore we have to round to an integer. Let's do $10. On Walmart this happens:
     - [`https://www.walmart.com/search?q=Blue+Cat+Hat&min_price=10&sort=price_low`](https://www.walmart.com/search?q=Blue+Cat+Hat&min_price=10&sort=price_low)
         - &sort=price_low
         - &min_price=10
@@ -74,11 +74,10 @@ Let’s research how each of these sites structure their URIs.
 - Searching for “Blue Cat Hat” produces the following:
     - [`https://www.ebay.com/sch/i.html?_nkw=Blue+Cat+Hat`](https://www.ebay.com/sch/i.html?_nkw=Blue+Cat+Hat)
         - https://www.ebay.com/sch/i.html?_nkw=[keywords parsed by +]
-- For the price is lowest and at least $10 on Ebay this happens:
-    - [`https://www.ebay.com/sch/i.html?_nkw=Blue+Cat+Hat&_udlo=10&_sop=15`](https://www.ebay.com/sch/i.html?_nkw=Blue+Cat+Hat&_udlo=10&_sop=15)
+- For the price is lowest and at least $10.02 on Ebay this happens:
+    - [`https://www.ebay.com/sch/i.html?_nkw=Blue+Cat+Hat&_udlo=10&_sop=15`](https://www.ebay.com/sch/i.html?_nkw=Blue+Cat+Hat&_udlo=10.02&_sop=15)
         - &_sop=15
-        - &_udlo=10
-        https://www.ebay.com/sch/i.html?_nkw=Blue%20Cat%20Hat&rt=nc&_udlo=10
+        - &_udlo=10.02
 
 - Now if we focus on the html that will get us the values we want, we will notice that they are all housed in this `div`:
     
@@ -138,13 +137,13 @@ Let’s research how each of these sites structure their URIs.
 - For the price is lowest and at least $10 on Amazon this happens:
     - [`https://www.amazon.com/s?k=Blue+Cat+Hat&rh=p_36%3A1000-&s=price-asc-rank`](https://www.amazon.com/s?k=Blue+Cat+Hat&rh=p_36%3A1000-&s=price-asc-rank)
         - &s=price-asc-rank
-        - &rh=p_36%3A1000-
-            - Interesting that the 10 is hidden here &rh=p_36%3A *10* 00-
+        - &rh=p_36%3A1002-
+            - Interesting that the 10.02 is hidden here &rh=p_36%3A *1002* -
 - If we add in the highest rating filter
-    - [`https://www.amazon.com/s?k=Blue+Cat+Hat&rh=p_36%3A1000-%2Cp_72%3A2661618011&s=price-asc-rank`](https://www.amazon.com/s?k=Blue+Cat+Hat&rh=p_36%3A1000-%2Cp_72%3A2661618011&s=price-asc-rank)
+    - [`https://www.amazon.com/s?k=Blue+Cat+Hat&rh=p_36%3A1002-%2Cp_72%3A2661618011&s=price-asc-rank`](https://www.amazon.com/s?k=Blue+Cat+Hat&rh=p_36%3A1002-%2Cp_72%3A2661618011&s=price-asc-rank)
     - It combines with the at least $10 piece!
-        - &rh=p_36%3A1000-%2Cp_72%3A2661618011
-        
+        - &rh=p_36%3A1002-%2Cp_72%3A2661618011
+
 - Now if we focus on the html that will get us the values we want, we will notice that they are all housed in this `div`:
     ![Untitled](Web%20Scraping%20Ideation/Untitled%202.png)
     

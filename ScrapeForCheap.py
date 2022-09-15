@@ -19,11 +19,12 @@ quitTheProgram = False
 os.system('clear')
 
 # Time to ask the user for their input
-print("Scrape For Cheap - V0.0.2")
-print("A python webscrape by Issam Abushaban\n\n")
+print("Scrape For Cheap - V0.0.3")
+print("A python webscrape by Issam Abushaban")
+print("-------------------------------------")
 
-print("Hello!\n")
-print("Welcome to Scrape For Cheap!\n")
+print("\n\nHello!")
+print("\nWelcome to Scrape For Cheap!")
 
 while not quitTheProgram:
 
@@ -37,6 +38,10 @@ while not quitTheProgram:
 
     # After we will generate the correct URLs by combining them
     generatedURLs = generate_URLs(keywordString, priceGuess)
+    
+    # Debugging!
+    print("\nAt the moment all we can do is make the urls! Look!")
+    print(generatedURLs)
 
     # Now we will execute the scraping queiries
     requestsGotten = get_Request_For_URLs(generatedURLs)
@@ -51,30 +56,30 @@ while not quitTheProgram:
 
     else:
         if (requestsGotten[1].status_code != 200):
-            print("Walmart Request Failed - Status Code: " + str(requestsGotten[1].status_code))
+            print(">Walmart Request Failed - Status Code: " + str(requestsGotten[1].status_code))
             numFailures += 1
         
         if (requestsGotten[2].status_code != 200):
-            print("Ebay Request Failed - Status Code: " + str(requestsGotten[2].status_code))
+            print(">Ebay Request Failed - Status Code: " + str(requestsGotten[2].status_code))
             numFailures += 1
 
         if (requestsGotten[3].status_code != 200):
-            print("Amazon Request Failed - Status Code: " + str(requestsGotten[3].status_code))
+            print(">Amazon Request Failed - Status Code: " + str(requestsGotten[3].status_code))
             numFailures += 1
 
     if numFailures > 0:
-        print("\nDue to failures we will not be able to execute your request at this time :(\n")
-        print("Please try again soon later.\n")
+        print("\nDue to failures we will not be able to execute your request at this time :(")
+        print("\nPlease try again soon later.")
 
     else:
         # If the queiries were successful we will preform some clean up and interpret the result using Soup!
         digestedResponse = digest_Requests(requestsGotten)
 
         # Lastly we will print out the answer to the user!
-        print("\nHere is your answer: " + digestedResponse + "\n")
+        print("\nHere is your answer: " + digestedResponse)
 
     # Ask them if they want to do another!
     quitTheProgram = not ask_For_User_Desire_To_Continue()
 
-print("Thank you for trying out Scrape For Cheap :D !\n")
+print("\nThank you for trying out Scrape For Cheap :D !\n")
 raise SystemExit

@@ -14,16 +14,19 @@ from bs4 import BeautifulSoup
 import urllib.parse
 
 # Walmart URI components
-walmartURIPrefix = "https://www.walmart.com/search?q="
-walmartURISuffix = "&sort=price_low"
+walmartURIPrefix  = "https://www.walmart.com/search?q="
+walmartURISuffix1 = "&min_price="
+walmartURISuffix2 = "&sort=price_low"
 
 # Ebay URI components
-ebayURIPrefix = "https://www.ebay.com/sch/i.html?_nkw="
-ebayURISuffix = "&_sop=15"
+ebayURIPrefix  = "https://www.ebay.com/sch/i.html?_nkw="
+ebayURISuffix1 = "&_udlo="
+ebayURISuffix2 = "&_sop=15"
 
 # Amazon URI components
-amazonURIPrefix = "https://www.amazon.com/s?k="
-amazonURISuffix = "&rh=p_72%3A2661618011&s=price-asc-rank"
+amazonURIPrefix  = "https://www.amazon.com/s?k="
+amazonURISuffix1 = "&rh=p_36%3A"
+amazonURISuffix2 = "-%2Cp_72%3A2661618011&s=price-asc-rank"
 
 # This function requests keywords from the user and returns them as space seperated values
 def ask_For_Keyword():
@@ -31,19 +34,19 @@ def ask_For_Keyword():
     keywordsApproved = False
     
     while not keywordsApproved:
-        print("What would you like to search for today?\n")
-        keywords = input().strip()
-        
+        print("\nWhat would you like to search for today?")
+        keywords = input("\nkey words: ").strip()
+
         #Check keywords
         if keywords == "":
-            print("Please enter at least one keyword, and make sure it is space seperated.\n")
+            print("\nPlease enter at least one keyword, and make sure it is space seperated.")
             continue
         else:
             keywordslist = keywords.split()
             keywords = ' '.join(keywordslist)
             
             if keywords == "":
-                print("Please enter at least one keyword, and make sure it is space seperated.\n")
+                print("\nPlease enter at least one keyword, and make sure it is space seperated.")
                 continue
             
             else:
@@ -57,14 +60,17 @@ def ask_For_Price_Guess():
     priceApproved = False
     
     while not priceApproved:
-        print("What is the lowest price you estimate that item could go for?\n")
-        price = input("$").strip()
+        print("\nWhat is the lowest price you estimate that item could go for?")
+        price = input("\n$").strip()
         
         #Check keywords
-        if not price.isfloat:
+        try:
+            price = float(price)
+        except ValueError:
             print("\nPlease enter in a valid price (e.g. $2.00).")
             continue
-        elif float(price) <= 0.00:
+        
+        if price <= 0.00:
             print("\nPlease enter a price greater thank $0.00.")
             continue
         else:
@@ -76,10 +82,22 @@ def ask_For_Price_Guess():
 # TODO: Right now priceGuess is not yet incorporated.
 def generate_URLs(keywordString, priceGuess):
 
+    walmartPriceGuess = str(round(priceGuess))
+    ebayPriceGuess = "{0:.2f}".format(priceGuess)
+    amazonPriceGuess = "{0:.2f}".format(priceGuess)
+
+    amazonPriceGuessParts = amazonPriceGuess.split(".")
+    amazonPriceGuess =   amazonPriceGuessParts[0] + amazonPriceGuessParts[1]
+    
+    # Debugging!
+    #print("\nwalmartPriceGuess = " + walmartPriceGuess)
+    #print("\nebayPriceGuess = " + ebayPriceGuess)
+    #print("\namazonPriceGuess = " + amazonPriceGuess)
+
     return [
-            walmartURIPrefix + keywordString + walmartURISuffix,
-            ebayURIPrefix + keywordString + ebayURISuffix,
-            amazonURIPrefix + keywordString + amazonURISuffix
+            walmartURIPrefix + keywordString + walmartURISuffix1 + walmartPriceGuess + walmartURISuffix2,
+            ebayURIPrefix + keywordString + ebayURISuffix1 + ebayPriceGuess + ebayURISuffix2,
+            amazonURIPrefix + keywordString + amazonURISuffix1 + amazonPriceGuess + amazonURISuffix2
             ]
 
 # This function...
