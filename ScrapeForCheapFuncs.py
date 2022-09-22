@@ -6,6 +6,7 @@
 # Objective: Scrape for Cheap Functions
 
 # For replacing text
+from ast import Try
 from dataclasses import replace
 from select import select
 from types import TracebackType
@@ -91,7 +92,6 @@ def ask_For_Price_Guess():
     return price
 
 # This function takes the keywords and price guess of the user and converts them to full URLs
-# TODO: Right now priceGuess is not yet incorporated.
 def generate_URLs(keywordString, priceGuess):
     
     # amazon has some weird rules!
@@ -104,11 +104,7 @@ def generate_URLs(keywordString, priceGuess):
     amazonPriceGuessParts = amazonPriceGuess.split(".")
     amazonPriceGuess =   amazonPriceGuessParts[0] + amazonPriceGuessParts[1]
     
-    # Debugging!
-    #print("\nwalmartPriceGuess = " + walmartPriceGuess)
-    #print("\nebayPriceGuess = " + ebayPriceGuess)
-    #print("\namazonPriceGuess = " + amazonPriceGuess)
-
+    # Generate The URLS
     generatedURLs = [
         walmartURIPrefix + keywordString + walmartURISuffix1 + walmartPriceGuess + walmartURISuffix2,
         ebayURIPrefix + keywordString + ebayURISuffix1 + ebayPriceGuess + ebayURISuffix2,
@@ -154,9 +150,8 @@ def digest_Responses(responsesRecieved):
     # Use Beautiful Soup to clean that html!
     soups = [BeautifulSoup(response.content, 'html.parser') for response in responsesRecieved]
 
-    #Debugging Build
-    while 1:
-        # Walmart Digest
+    # Walmart Digest ###############################
+    try:
         #walmartMainDiv  = soups[0].find('div[data-stack-index="0"]')
         #walmartSubDiv   = walmartMainDiv.select("section > div")
         #walmartAllItems = walmartSubDiv.select("div > div")
@@ -165,59 +160,88 @@ def digest_Responses(responsesRecieved):
         walmartItemPrice = "0.00"
         walmartItemShipping =  "0.00"
         walmartItemCost = float(walmartItemPrice) + float(walmartItemShipping)
-
-        # Ebay Digest
+        walmartItemURL = responsesRecieved[0].url
+    except:
+        print(">Walmart Digest Failed")
+    
+    # Ebay Digest ##################################
+    try:
         ebayOuterDiv  = soups[1].find('div', id="mainContent").find('div', id="srp-river-results")
         ebayInnerList = ebayOuterDiv.find('ul',class_="srp-results srp-list clearfix")
-        ebayItem      = ebayInnerList.select('li[data-view="mi:1686|iid:1"]')
-        
-        ebayItemTitle = "Item Title"
-        ebayItemPrice = "0.00"
-        ebayItemShipping =  "0.00"
-        ebayItemCost = float(ebayItemPrice) + float(ebayItemShipping)
+        ebayItemURL = ebayInnerList.select('li[data-view="mi:1686|iid:1"]')[0].find(
+                                           'a', class_="s-item__link").get("href")
+        ebayItemInfo  = ebayInnerList.select('li[data-view="mi:1686|iid:1"]')[0].find(
+                                             'div', class_="s-item__info clearfix")
+        ebayItemTitle = ebayItemInfo.find('div',class_="s-item__title").find(
+                                          'span').text
+        ebayItemPrice = ebayItemInfo.find('div',class_="s-item__details clearfix").find(
+                                          'span', class_="s-item__price").text
+        ebayItemShipping = ebayItemInfo.find('div',class_="s-item__details clearfix").find(
+                                             'span', class_="s-item__shipping s-item__logisticsCost").text
 
-        # Amazon Digest
+        # Now we need to deal with the numbers provided.
+        # Ebay prices look like this "$700.00", so let's convert it to 700.00
+        ebayItemPrice = ebayItemPrice.replace("$","")
+
+        # Ebay shipping look like this "+$5.00 shipping" or "Free shipping"
+        if ebayItemShipping.startswith("Free"):
+            ebayItemShipping = "0.00"
+        else:
+            ebayItemShipping = ebayItemShipping.replace("+","").replace(" shipping","").replace("$","")
+
+        ebayItemCost = float(ebayItemPrice) + float(ebayItemShipping)
+    except:
+        print(">Ebay Digest Failed")
+    
+    # Amazon Digest ################################
+    try:
         amazonItemTitle = "Item Title"
         amazonItemPrice = "0.00"
         amazonItemShipping =  "0.00"
         amazonItemCost = float(amazonItemPrice) + float(amazonItemShipping)
+        amazonItemURL = responsesRecieved[2].url
 
         # Response Prep
-        walmartResponse = "What we found at: Walmart" + "\n"
+        walmartResponse = "\nWhat we found at: Walmart" + "\n"
         walmartResponse += "Item: " + walmartItemTitle + "\n"
         walmartResponse += "Price: $" + walmartItemPrice + "\n"
         walmartResponse += "Shipping: $" + walmartItemShipping + "\n"
+        walmartResponse += "Link: " + walmartItemURL + "\n"
 
-        ebayResponse = "What we found at: Ebay" + "\n"
+        ebayResponse = "\nWhat we found at: Ebay" + "\n"
         ebayResponse += "Item: " + ebayItemTitle + "\n"
         ebayResponse += "Price: $" + ebayItemPrice + "\n"
         ebayResponse += "Shipping: $" + ebayItemShipping + "\n"
+        ebayResponse += "Link: " + ebayItemURL + "\n"
 
-        amazonResponse = "What we found at: Amazon" + "\n"
+        amazonResponse = "\nWhat we found at: Amazon" + "\n"
         amazonResponse += "Item: " + amazonItemTitle + "\n"
         amazonResponse += "Price: $" + amazonItemPrice + "\n"
         amazonResponse += "Shipping: $" + amazonItemShipping + "\n"
+        amazonResponse += "Link: " + amazonItemURL + "\n"
+    except:
+        print(">Amazon Digest Failed")
+    
+    # Completing The Response Digest
+    digestedResponse = "\nWe have determined that the cheapest product is:"
+    remainingResponse = "\nBelow you will find detail for the other two sites:"
 
-        digestedResponse = "We have determined that the cheapest product is:"
-        remainingResponse = "Below you will find detail for the other two sites:"
+    digestedResponse += "\n"
 
-        # Response Digest
-        digestedResponse += "\n"
+    if (walmartItemCost <= ebayItemCost and walmartItemCost <= amazonItemCost):
+        digestedResponse += walmartResponse + "\n" + remainingResponse
+        digestedResponse += ebayResponse + "\n"
+        digestedResponse += amazonResponse + "\n"
 
-        if (walmartItemCost <= ebayItemCost and walmartItemCost <= amazonItemCost):
-            digestedResponse += walmartResponse + "\n" + remainingResponse
-            digestedResponse += ebayResponse + "\n"
-            digestedResponse += amazonResponse + "\n"
+    elif (ebayItemCost <= walmartItemCost and ebayItemCost <= amazonItemCost):
+        digestedResponse += ebayResponse + "\n" + remainingResponse
+        digestedResponse += walmartResponse + "\n"
+        digestedResponse += amazonResponse + "\n"
 
-        elif (ebayItemCost <= walmartItemCost and ebayItemCost <= amazonItemCost):
-            digestedResponse += ebayResponse + "\n" + remainingResponse
-            digestedResponse += walmartResponse + "\n"
-            digestedResponse += amazonResponse + "\n"
-
-        elif (amazonItemCost <= walmartItemCost and amazonItemCost <= ebayItemCost):
-            digestedResponse += amazonResponse + "\n" + remainingResponse
-            digestedResponse += walmartResponse + "\n"
-            digestedResponse += ebayResponse + "\n"
+    elif (amazonItemCost <= walmartItemCost and amazonItemCost <= ebayItemCost):
+        digestedResponse += amazonResponse + "\n" + remainingResponse
+        digestedResponse += walmartResponse + "\n"
+        digestedResponse += ebayResponse + "\n"
 
     return digestedResponse
 

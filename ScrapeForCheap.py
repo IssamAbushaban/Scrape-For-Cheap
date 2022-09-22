@@ -40,10 +40,6 @@ while not quitTheProgram:
     # After we will generate the correct URLs by combining them
     generatedURLs = generate_URLs(keywordString, priceGuess)
     
-    # Debugging!
-    #print("\nAt the moment all we can do is make the urls! Look!\n")
-    #print(generatedURLs)
-
     # Now we will execute the scraping queiries
     responsesRecieved = get_Request_For_URLs(generatedURLs)
 
@@ -54,14 +50,11 @@ while not quitTheProgram:
         quitTheProgram = not ask_For_User_Desire_To_Continue()
         continue
     
-    # Debugging!
-    #print(responsesRecieved)
-
     # If the queiries were successful we will preform some clean up and interpret the result using Soup!
     digestedResponse = digest_Responses(responsesRecieved)
 
     # Lastly we will print out the answer to the user!
-    print("\nHere is your answer: " + digestedResponse)
+    print("\nHere is your answer:\n" + digestedResponse)
 
     # Ask them if they want to do another!
     quitTheProgram = not ask_For_User_Desire_To_Continue()
