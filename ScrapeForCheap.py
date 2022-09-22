@@ -19,8 +19,9 @@ quitTheProgram = False
 os.system('clear')
 
 # Time to ask the user for their input
-print("Scrape For Cheap - V0.0.3")
+print("Scrape For Cheap - V0.0.4")
 print("A python webscrape by Issam Abushaban")
+print("*THIS SOFTWARE IS INTENDED FOR EDUCATIONAL USE ONLY*")
 print("-------------------------------------")
 
 print("\n\nHello!")

@@ -7,6 +7,9 @@
 
 # For replacing text
 from dataclasses import replace
+from select import select
+from types import TracebackType
+from unittest import case
 # For transating to URL
 from urllib import response
 # This is to help us make HTTP request
@@ -16,10 +19,11 @@ from bs4 import BeautifulSoup
 # So we can convert text to a URL query
 import urllib.parse
 
-amazonHeaders = {
-                 "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/105.0.0.0 Safari/537.36",
-                 "sec-ch-ua-platform" : "macOS"
-                 }
+# So we can connect
+headers = { 
+            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/105.0.0.0 Safari/537.36",
+            "sec-ch-ua-platform" : "macOS"
+          }
 
 # Walmart URI components
 walmartURIPrefix  = "https://www.walmart.com/search?q="
@@ -120,9 +124,9 @@ def get_Request_For_URLs(generatedURLs):
     numFailures = 0
 
     # lets make a GET request for each URL
-    responsesRecieved = [ requests.get(generatedURLs[0]),
-                          requests.get(generatedURLs[1]),
-                          requests.get(generatedURLs[2], headers=amazonHeaders)
+    responsesRecieved = [ requests.get(generatedURLs[0], headers=headers),
+                          requests.get(generatedURLs[1], headers=headers),
+                          requests.get(generatedURLs[2], headers=headers)
                         ]
 
     print()
@@ -141,22 +145,101 @@ def get_Request_For_URLs(generatedURLs):
         numFailures += 1
 
     if numFailures > 0:
-        #responsesRecieved.clear()
-        pass
+        responsesRecieved.clear()
     
     return responsesRecieved
 
 # This function...
 def digest_Responses(responsesRecieved):
-
     # Use Beautiful Soup to clean that html!
-    # soupOfURI = BeautifulSoup(reqGET.content, 'html.parser')
+    soups = [BeautifulSoup(response.content, 'html.parser') for response in responsesRecieved]
 
-    # Print content of request
-    # print(soupOfURI.prettify() + "\n")
+    #Debugging Build
+    while 1:
+        # Walmart Digest
+        #walmartMainDiv  = soups[0].find('div[data-stack-index="0"]')
+        #walmartSubDiv   = walmartMainDiv.select("section > div")
+        #walmartAllItems = walmartSubDiv.select("div > div")
+        
+        walmartItemTitle = "Item Title"
+        walmartItemPrice = "0.00"
+        walmartItemShipping =  "0.00"
+        walmartItemCost = float(walmartItemPrice) + float(walmartItemShipping)
 
-    return ""
+        # Ebay Digest
+        ebayOuterDiv  = soups[1].find('div', id="mainContent").find('div', id="srp-river-results")
+        ebayInnerList = ebayOuterDiv.find('ul',class_="srp-results srp-list clearfix")
+        ebayItem      = ebayInnerList.select('li[data-view="mi:1686|iid:1"]')
+        
+        ebayItemTitle = "Item Title"
+        ebayItemPrice = "0.00"
+        ebayItemShipping =  "0.00"
+        ebayItemCost = float(ebayItemPrice) + float(ebayItemShipping)
+
+        # Amazon Digest
+        amazonItemTitle = "Item Title"
+        amazonItemPrice = "0.00"
+        amazonItemShipping =  "0.00"
+        amazonItemCost = float(amazonItemPrice) + float(amazonItemShipping)
+
+        # Response Prep
+        walmartResponse = "What we found at: Walmart" + "\n"
+        walmartResponse += "Item: " + walmartItemTitle + "\n"
+        walmartResponse += "Price: $" + walmartItemPrice + "\n"
+        walmartResponse += "Shipping: $" + walmartItemShipping + "\n"
+
+        ebayResponse = "What we found at: Ebay" + "\n"
+        ebayResponse += "Item: " + ebayItemTitle + "\n"
+        ebayResponse += "Price: $" + ebayItemPrice + "\n"
+        ebayResponse += "Shipping: $" + ebayItemShipping + "\n"
+
+        amazonResponse = "What we found at: Amazon" + "\n"
+        amazonResponse += "Item: " + amazonItemTitle + "\n"
+        amazonResponse += "Price: $" + amazonItemPrice + "\n"
+        amazonResponse += "Shipping: $" + amazonItemShipping + "\n"
+
+        digestedResponse = "We have determined that the cheapest product is:"
+        remainingResponse = "Below you will find detail for the other two sites:"
+
+        # Response Digest
+        digestedResponse += "\n"
+
+        if (walmartItemCost <= ebayItemCost and walmartItemCost <= amazonItemCost):
+            digestedResponse += walmartResponse + "\n" + remainingResponse
+            digestedResponse += ebayResponse + "\n"
+            digestedResponse += amazonResponse + "\n"
+
+        elif (ebayItemCost <= walmartItemCost and ebayItemCost <= amazonItemCost):
+            digestedResponse += ebayResponse + "\n" + remainingResponse
+            digestedResponse += walmartResponse + "\n"
+            digestedResponse += amazonResponse + "\n"
+
+        elif (amazonItemCost <= walmartItemCost and amazonItemCost <= ebayItemCost):
+            digestedResponse += amazonResponse + "\n" + remainingResponse
+            digestedResponse += walmartResponse + "\n"
+            digestedResponse += ebayResponse + "\n"
+
+    return digestedResponse
 
 # This function...
 def ask_For_User_Desire_To_Continue():
-    return False
+    userDesireToContinue = False
+    userInput = ""
+    inputApproved = False
+
+    while not inputApproved:
+        print("\nWould you like to try again?")
+        userInput = input("\nY or N: ").strip()
+
+        #Check Input
+        if userInput == "Y" or userInput.capitalize() == "YES":
+            userDesireToContinue = True
+            inputApproved = True
+        elif userInput == "N" or userInput.capitalize() == "NO":
+            userDesireToContinue = False
+            inputApproved = True
+        else : 
+            print("\nPlease enter Yes or No.")
+            continue
+
+    return userDesireToContinue
