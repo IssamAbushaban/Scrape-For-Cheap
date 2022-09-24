@@ -54,7 +54,8 @@ while not quitTheProgram:
     digestedResponse = digest_Responses(responsesRecieved)
 
     # Lastly we will print out the answer to the user!
-    print("\nHere is your answer:\n" + digestedResponse)
+    print("-------------------------------------")
+    print("Here is your answer:\n" + digestedResponse)
 
     # Ask them if they want to do another!
     quitTheProgram = not ask_For_User_Desire_To_Continue()

@@ -5,20 +5,17 @@
 # 
 # Objective: Scrape for Cheap Functions
 
-# For replacing text
-from ast import Try
-from dataclasses import replace
-from select import select
-from types import TracebackType
-from unittest import case
-# For transating to URL
-from urllib import response
-# This is to help us make HTTP request
-import requests
 # This is to make the text coming from the site more readible
 from bs4 import BeautifulSoup 
 # So we can convert text to a URL query
 import urllib.parse
+# This is to help us make HTTP request and for scraping protection against websites
+from scrapfly import ScrapeConfig, ScrapflyClient
+# API Credentials
+from ScrapFlyApi import apiTestKey
+
+# Start a session
+session = ScrapflyClient(key=apiTestKey, max_concurrency=1)
 
 # So we can connect
 headers = { 
@@ -123,9 +120,11 @@ def get_Request_For_URLs(generatedURLs):
     numFailures = 0
 
     # lets make a GET request for each URL
-    responsesRecieved = [ requests.get(generatedURLs[0], headers=headers),
-                          requests.get(generatedURLs[1], headers=headers),
-                          requests.get(generatedURLs[2], headers=headers)
+
+    responsesRecieved = [ 
+                          session.scrape(ScrapeConfig(url=generatedURLs[0],headers=headers, asp=True, country="US")),
+                          session.scrape(ScrapeConfig(url=generatedURLs[1],headers=headers, asp=True, country="US")),
+                          session.scrape(ScrapeConfig(url=generatedURLs[2],headers=headers, asp=True, country="US"))
                         ]
 
     print()
@@ -133,9 +132,6 @@ def get_Request_For_URLs(generatedURLs):
     # Check for request failures
     if (responsesRecieved[0].status_code != 200):
         print("> Walmart Request Failed - Status Code: " + str(responsesRecieved[0].status_code))
-        numFailures += 1
-    elif (responsesRecieved[0].url.startswith("https://www.walmart.com/blocked")):
-        print("> Walmart Request Failed - Identified As Robot.")
         numFailures += 1
 
     if (responsesRecieved[1].status_code != 200):
@@ -156,6 +152,11 @@ def digest_Responses(responsesRecieved):
     # Use Beautiful Soup to clean that html!
     soups = [BeautifulSoup(response.content, 'html.parser') for response in responsesRecieved]
     
+    # Response Prep
+    walmartResponse = "\nWhat we found at Walmart" + "\n\n"
+    ebayResponse = "\nWhat we found at Ebay" + "\n\n"
+    amazonResponse = "\nWhat we found at Amazon" + "\n\n"
+
     # Walmart Digest ###############################
     try:
         walmartOuterDiv   = soups[0].find('div', id="results-container").next_sibling.find('div')
@@ -178,8 +179,14 @@ def digest_Responses(responsesRecieved):
         
         walmartItemCost = float(walmartItemPrice)
 
+        walmartResponse += "Item: " + walmartItemTitle + "\n"
+        walmartResponse += "Price: $" + walmartItemPrice + "\n"
+        walmartResponse += "Shipping: $" + walmartItemShipping + "\n"
+        walmartResponse += "Link: " + walmartItemURL + "\n"
+
     except:
-        print(">Walmart Digest Failed")
+        walmartItemCost = 99999999.99
+        walmartResponse += ">Walmart Digest Failed"
     
     # Ebay Digest ##################################
     try:
@@ -202,8 +209,15 @@ def digest_Responses(responsesRecieved):
             ebayItemShipping = ebayItemShipping.replace("+","").replace(" shipping","").replace("$","")
 
         ebayItemCost = float(ebayItemPrice) + float(ebayItemShipping)
+    
+        ebayResponse += "Item: " + ebayItemTitle + "\n"
+        ebayResponse += "Price: $" + ebayItemPrice + "\n"
+        ebayResponse += "Shipping: $" + ebayItemShipping + "\n"
+        ebayResponse += "Link: " + ebayItemURL + "\n"
+
     except:
-        print(">Ebay Digest Failed")
+        ebayItemCost = 99999999.99
+        ebayResponse += ">Ebay Digest Failed"
     
     # Amazon Digest ################################
     try:
@@ -213,32 +227,18 @@ def digest_Responses(responsesRecieved):
         amazonItemCost = float(amazonItemPrice) + float(amazonItemShipping)
         amazonItemURL = responsesRecieved[2].url
 
-        # Response Prep
-        walmartResponse = "\nWhat we found at: Walmart" + "\n"
-        walmartResponse += "Item: " + walmartItemTitle + "\n"
-        walmartResponse += "Price: $" + walmartItemPrice + "\n"
-        walmartResponse += "Shipping: $" + walmartItemShipping + "\n"
-        walmartResponse += "Link: " + walmartItemURL + "\n"
-
-        ebayResponse = "\nWhat we found at: Ebay" + "\n"
-        ebayResponse += "Item: " + ebayItemTitle + "\n"
-        ebayResponse += "Price: $" + ebayItemPrice + "\n"
-        ebayResponse += "Shipping: $" + ebayItemShipping + "\n"
-        ebayResponse += "Link: " + ebayItemURL + "\n"
-
-        amazonResponse = "\nWhat we found at: Amazon" + "\n"
         amazonResponse += "Item: " + amazonItemTitle + "\n"
         amazonResponse += "Price: $" + amazonItemPrice + "\n"
         amazonResponse += "Shipping: $" + amazonItemShipping + "\n"
         amazonResponse += "Link: " + amazonItemURL + "\n"
-    except:
-        print(">Amazon Digest Failed")
     
-    # Completing The Response Digest
-    digestedResponse = "\nWe have determined that the cheapest product is:"
-    remainingResponse = "\nBelow you will find detail for the other two sites:"
+    except:
+        amazonItemCost = 99999999.99
+        amazonResponse += ">Amazon Digest Failed"
 
-    digestedResponse += "\n"
+    # Completing The Response Digest
+    digestedResponse = "\nWe have determined that the cheapest product is:\n"
+    remainingResponse = "\nBelow you will find detail for the other two sites:\n"
 
     if (walmartItemCost <= ebayItemCost and walmartItemCost <= amazonItemCost):
         digestedResponse += walmartResponse + "\n" + remainingResponse
