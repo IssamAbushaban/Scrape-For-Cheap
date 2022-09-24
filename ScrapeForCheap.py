@@ -1,7 +1,7 @@
 # ScrapeForCheap.py
 # 
 # Developed by Issam Abushaban
-# Last updated: Septempber 14th 2022
+# Last updated: Septempber 24th 2022
 # 
 # Objective: Scrape Amazon, Walmart & Ebay for the top result 
 # (as assessed by best match, price, and rating when applicable) matching a person's keywords and expected price
@@ -19,7 +19,7 @@ quitTheProgram = False
 os.system('clear')
 
 # Time to ask the user for their input
-print("Scrape For Cheap - V0.0.5")
+print("Scrape For Cheap - V0.0.6")
 print("A python webscrape by Issam Abushaban\n")
 print("THIS SOFTWARE IS INTENDED FOR EDUCATIONAL USE ONLY\n")
 print("-------------------------------------")

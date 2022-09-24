@@ -1,7 +1,7 @@
 # ScrapeForCheapFuncs.py
 # 
 # Developed by Issam Abushaban
-# Last updated: Septempber 14th 2022
+# Last updated: Septempber 24th 2022
 # 
 # Objective: Scrape for Cheap Functions
 
