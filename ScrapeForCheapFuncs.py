@@ -23,7 +23,10 @@ import urllib.parse
 # So we can connect
 headers = { 
             "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/105.0.0.0 Safari/537.36",
-            "sec-ch-ua-platform" : "macOS"
+            "sec-ch-ua-platform" : "macOS",
+            "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,image/apng,*/*;q=0.8",
+            "accept-language": "en-US;en;q=0.9",
+            "accept-encoding": "gzip, deflate, br"
           }
 
 # Walmart URI components
@@ -129,15 +132,18 @@ def get_Request_For_URLs(generatedURLs):
 
     # Check for request failures
     if (responsesRecieved[0].status_code != 200):
-        print(">Walmart Request Failed - Status Code: " + str(responsesRecieved[0].status_code))
+        print("> Walmart Request Failed - Status Code: " + str(responsesRecieved[0].status_code))
         numFailures += 1
-    
+    elif (responsesRecieved[0].url.startswith("https://www.walmart.com/blocked")):
+        print("> Walmart Request Failed - Identified As Robot.")
+        numFailures += 1
+
     if (responsesRecieved[1].status_code != 200):
-        print(">Ebay Request Failed - Status Code: " + str(responsesRecieved[1].status_code))
+        print("> Ebay Request Failed - Status Code: " + str(responsesRecieved[1].status_code))
         numFailures += 1
 
     if (responsesRecieved[2].status_code != 200):
-        print(">Amazon Request Failed - Status Code: " + str(responsesRecieved[2].status_code))
+        print("> Amazon Request Failed - Status Code: " + str(responsesRecieved[2].status_code))
         numFailures += 1
 
     if numFailures > 0:
@@ -149,18 +155,29 @@ def get_Request_For_URLs(generatedURLs):
 def digest_Responses(responsesRecieved):
     # Use Beautiful Soup to clean that html!
     soups = [BeautifulSoup(response.content, 'html.parser') for response in responsesRecieved]
-
+    
     # Walmart Digest ###############################
     try:
-        #walmartMainDiv  = soups[0].find('div[data-stack-index="0"]')
-        #walmartSubDiv   = walmartMainDiv.select("section > div")
-        #walmartAllItems = walmartSubDiv.select("div > div")
+        walmartOuterDiv   = soups[0].find('div', id="results-container").next_sibling.find('div')
+        walmartInnerList = walmartOuterDiv.contents        
+        walmartItemURL = "https://www.walmart.com/" + walmartInnerList[0].find('div').find('div').find('a').get("href")
+        walmartItemInfo = walmartInnerList[0].find('div').find('div').find('div').find('div').next_sibling
+        walmartItemTitle = walmartItemInfo.contents[1].find('span').text
+        walmartItemPrice = walmartItemInfo.select('div[data-automation-id="product-price"]')[0].select('div[aria-hidden="true"]')[0].text
         
-        walmartItemTitle = "Item Title"
-        walmartItemPrice = "0.00"
-        walmartItemShipping =  "0.00"
-        walmartItemCost = float(walmartItemPrice) + float(walmartItemShipping)
-        walmartItemURL = responsesRecieved[0].url
+        # Now we need to deal with the numbers provided.
+        # Walmart prices look like this "$700.00", so let's convert it to 700.00
+        walmartItemPrice = walmartItemPrice.replace("$","")
+
+        # Walmart doesn't disclose shipping cost on the first page, but there is a general rule of thumb.
+        # Prices above $35 get free shipping.
+        if float(walmartItemPrice) >= 35.00:
+            walmartItemShipping = "0.00"
+        else:
+            walmartItemShipping = "TBD at checkout"
+        
+        walmartItemCost = float(walmartItemPrice)
+
     except:
         print(">Walmart Digest Failed")
     
@@ -168,16 +185,11 @@ def digest_Responses(responsesRecieved):
     try:
         ebayOuterDiv  = soups[1].find('div', id="mainContent").find('div', id="srp-river-results")
         ebayInnerList = ebayOuterDiv.find('ul',class_="srp-results srp-list clearfix")
-        ebayItemURL = ebayInnerList.select('li[data-view="mi:1686|iid:1"]')[0].find(
-                                           'a', class_="s-item__link").get("href")
-        ebayItemInfo  = ebayInnerList.select('li[data-view="mi:1686|iid:1"]')[0].find(
-                                             'div', class_="s-item__info clearfix")
-        ebayItemTitle = ebayItemInfo.find('div',class_="s-item__title").find(
-                                          'span').text
-        ebayItemPrice = ebayItemInfo.find('div',class_="s-item__details clearfix").find(
-                                          'span', class_="s-item__price").text
-        ebayItemShipping = ebayItemInfo.find('div',class_="s-item__details clearfix").find(
-                                             'span', class_="s-item__shipping s-item__logisticsCost").text
+        ebayItemURL = ebayInnerList.select('li[data-view="mi:1686|iid:1"]')[0].find('a', class_="s-item__link").get("href")
+        ebayItemInfo  = ebayInnerList.select('li[data-view="mi:1686|iid:1"]')[0].find('div', class_="s-item__info clearfix")
+        ebayItemTitle = ebayItemInfo.find('div',class_="s-item__title").find('span').text
+        ebayItemPrice = ebayItemInfo.find('div',class_="s-item__details clearfix").find('span', class_="s-item__price").text
+        ebayItemShipping = ebayItemInfo.find('div',class_="s-item__details clearfix").find('span', class_="s-item__shipping s-item__logisticsCost").text
 
         # Now we need to deal with the numbers provided.
         # Ebay prices look like this "$700.00", so let's convert it to 700.00
