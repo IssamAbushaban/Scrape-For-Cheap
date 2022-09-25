@@ -11,7 +11,9 @@ from bs4 import BeautifulSoup
 import urllib.parse
 # This is to help us make HTTP request and for scraping protection against websites
 from scrapfly import ScrapeConfig, ScrapflyClient
-# API Credentials
+# API Credentials (Note you will not get this file from me. 
+# You need to create a file called ScrapFlyApi and add the variable apiTestKey = "YOUR API KEY". 
+# Make sure to get one from the scrapFly website. You can start with a free account. DO NOT SHARE YOUR Key)
 from ScrapFlyApi import apiTestKey
 
 # Start a session
