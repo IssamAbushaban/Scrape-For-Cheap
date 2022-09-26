@@ -13,7 +13,7 @@ import urllib.parse
 from scrapfly import ScrapeConfig, ScrapflyClient
 # API Credentials (Note you will not get this file from me. 
 # You need to create a file called ScrapFlyApi and add the variable apiTestKey = "YOUR API KEY". 
-# Make sure to get one from the scrapFly website. You can start with a free account. DO NOT SHARE YOUR Key)
+# Make sure to get one from the scrapFly website. You can start with a free account. DO NOT SHARE YOUR KEY)
 from ScrapFlyApi import apiTestKey
 
 # Start a session
@@ -41,7 +41,7 @@ ebayURISuffix2 = "&_sop=15"
 # Amazon URI components
 amazonURIPrefix  = "https://www.amazon.com/s?k="
 amazonURISuffix1 = "&rh=p_36%3A"
-amazonURISuffix2 = "-%2Cp_72%3A2661618011&s=price-asc-rank"
+amazonURISuffix2 = "-&s=price-asc-rank"
 
 # This function requests keywords from the user and returns them as space seperated values
 def ask_For_Keyword():
